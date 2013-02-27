@@ -1,0 +1,309 @@
+<html>
+
+<head>
+<script>
+
+function makeHttpObject() {
+  try {return new XMLHttpRequest();}
+  catch (error) {}
+  try {return new ActiveXObject("Msxml2.XMLHTTP");}
+  catch (errorMsxml) {}
+  try {return new ActiveXObject("Microsoft.XMLHTTP");}
+  catch (errorMicrosoft) {}
+
+  throw new Error("Could not create HTTP request object.");
+}
+
+
+function toElement(html){
+  var div = document.createElement('div');
+  div.innerHTML = html;
+  var el = div.childNodes[0];
+  div.removeChild(el);
+  return el;
+}
+
+function addGetParam(url, paramName, paramValue){
+  var newUrl = url+"&"+paramName+"="+encodeURIComponent(paramValue);
+  return newUrl;
+}
+
+function submitFile() {
+  var that = this;
+  showPopup('bgpopup');
+  showPopup('loadingpopup');
+
+  var fileControl = document.getElementById("uploadfile");
+  var file = fileControl.files[0];
+
+  var oReq = makeHttpObject();
+  var sizeF = (file.fileSize==undefined)?file.size:file.fileSize;
+  var fName = (file.fileName==undefined)?file.name:file.fileName;
+  var url = addGetParam("/pentaho/content/rfp/index.html?mode=check","size",sizeF);
+  url = addGetParam(url, "filename",fName);
+  oReq.open("GET", url, true);
+  oReq.onreadystatechange = function (oEvent) {
+    if (oReq.readyState === 4) {
+      if (oReq.status === 200) {
+        if(oReq.responseText=="OK"){
+          that.sendFile();
+        }else {
+          that.setPopupContent('popupBody',oReq.responseText);
+          that.hidePopup('loadingpopup');
+that.hidePopup('bgpopup');
+          that.showPopup('popup');
+        }
+      }
+    }
+  };
+  oReq.send(null);
+}
+
+function sendFile() {
+
+  var iframe = toElement('<iframe src="javascript:false;" name="uploadFrame" />');
+  iframe.id = 'uploadFrame';
+  iframe.style.display = 'none';
+  document.body.appendChild(iframe);
+
+  var form = toElement('<form method="post" enctype="multipart/form-data"></form>');
+  form.style.display = 'none';
+  form.action = "/pentaho/upload/myPluginUploader";
+  form.target = iframe.name;
+  document.body.appendChild(form);
+  form.appendChild(document.getElementById('uploadfile'));
+  var fileControl = document.getElementById("uploadfile");
+  var file = fileControl.files[0];
+  document.getElementById('fileName').value=(file.fileName==undefined)?file.name:file.fileName;
+  form.submit();
+
+}
+
+function continueLoad(path) {
+
+  document.getElementById('fileOnServer').value=path;
+
+  var fname = document.getElementById('fileName').value;
+  var ftitre = document.getElementById('titre').value;
+  var fdesc = document.getElementById('desc').value;
+  var fpath = document.getElementById('path').value;
+
+  var urlRedirect = "/pentaho/content/rfp/index.html?mode=update";
+  urlRedirect = addGetParam(urlRedirect,"fileOnServer",path);
+  urlRedirect = addGetParam(urlRedirect,"fileName",fname);
+  urlRedirect = addGetParam(urlRedirect,"titre",ftitre);
+  urlRedirect = addGetParam(urlRedirect,"desc",fdesc);
+  urlRedirect = addGetParam(urlRedirect,"path",fpath);
+  window.location = urlRedirect;
+
+}
+
+function setPopupContent(id, html) {
+  var popup = document.getElementById(id);
+  popup.innerHTML = html;
+}
+
+
+
+function showPopup(id) {
+  var popup = document.getElementById(id);
+  popup.style.display = 'block';
+}
+
+function hidePopup(id) {
+  var popup = document.getElementById(id);
+  popup.style.display = 'none';
+}
+
+function selectPath(id, div) {
+
+  var that = this;
+  var req = makeHttpObject();
+  showPopup('bgpopup');
+  showPopup('loadingpopup');
+
+  req.open("GET", "/pentaho/content/rfp/index.html?mode=jsonTree", true);
+
+  req.onreadystatechange = function (oEvent) {
+    if (req.readyState === 4) {
+      if (req.status === 200) {
+        that.treat(div, req.responseText);
+        that.hidePopup('loadingpopup');
+        that.showPopup(id);
+      }
+    }
+  };
+  req.send(null);
+}
+
+function jeval(str){
+	var escapedBS = str.replace(/\\/g,"%5C" );
+	return eval('(' +  escapedBS + ')')
+
+	}
+
+function treat(div, json) {
+  this.selectedPath = null;
+  itemjs = jeval(json);
+
+  var renderDiv = document.getElementById(div);
+
+  itemsdiv = generateBaseFolderDiv(itemjs, 0);
+
+  this.currentTree = itemjs;
+  this.currentBranch = itemjs;
+
+  renderDiv.innerHTML = itemsdiv;
+}
+
+function openBranch(i){
+  var ref = i;
+  var that = this;
+  var div = document.getElementById(i+'childs');
+  var lnk = document.getElementById(i+'link');
+  lnk.innerHTML = '<img border="0" style="background: transparent url(/pentaho/content/RFP/resources/folds.png) no-repeat scroll -16px 0px;margin-left:1px; width: 35px; height: 14px; -moz-background-clip: border; -moz-background-origin: padding; -moz-background-inline-policy: continuous;" src="/pentaho/content/RFP/resources/clear.cache.gif">';
+
+  lnk.onclick = function () {
+    closeBranch(i);
+    return false;
+  };
+  div.style.display='block';
+}
+
+function closeBranch(i){
+  var ref = i;
+  var div = document.getElementById(i+'childs');
+  var lnk = document.getElementById(i+'link');
+  lnk.innerHTML = '<img border="0" style="background: transparent url(/pentaho/content/RFP/resources/folds.png) no-repeat scroll -50px 0px; width: 35px; height: 14px; -moz-background-clip: border; -moz-background-origin: padding; -moz-background-inline-policy: continuous;" src="/pentaho/content/RFP/resources/clear.cache.gif">';
+
+  lnk.onclick = function () {
+    openBranch(i);
+    return false;
+  };
+  div.style.display='none';
+}
+
+
+function generateBaseFolderDiv(folder, depth){
+
+  var style = 'style="display:none"';
+  var time = new Date().getTime();
+
+  if(folder == undefined){
+	return "";
+  }
+  var newdiv = '<div id="' + folder.nodeName + '">';
+
+  // we'll need depth to fix padding
+  for(var i=0;i<depth;i++){
+    newdiv += '&nbsp;&nbsp;';
+  }
+
+  if(folder.childNodes && folder.childNodes.length > 0){
+    // if childs + we need + sign
+    newdiv += '<a id="'+time+ folder.nodeName + '#' + depth + 'link" onClick="openBranch(\''+time+folder.nodeName+'#'+depth+'\')"><img border="0" style="background: transparent url(/pentaho/content/RFP/resources/folds.png) no-repeat scroll -50px 0px; width: 35px; height: 14px; -moz-background-clip: border; -moz-background-origin: padding; -moz-background-inline-policy: continuous;" src="/pentaho/content/RFP/resources/clear.cache.gif"></a>';
+  } else {
+  newdiv += '<img border="0" style="background: transparent url(/pentaho/content/RFP/resources/folds.png) no-repeat scroll -65px 0;margin-left:15px; width: 20px; height: 14px; -moz-background-clip: border; -moz-background-origin: padding; -moz-background-inline-policy: continuous;" src="/pentaho/content/RFP/resources/clear.cache.gif">';
+  }
+
+  newdiv += '<a id="'+time + folder.nodeName + '#'+depth + '" onClick="setSelectedPath(\''+time + folder.nodeName+'#'+depth + '\',\''+folder.nodePath+'\')">';
+  newdiv += folder.nodeName;
+  newdiv += '</a>';
+  newdiv += '</div>';
+  newdiv += '<div ' + style + ' id="' + time + folder.nodeName + '#'+depth+'childs">';
+
+  if(folder.childNodes && folder.childNodes.length > 0){
+
+   for(var j=0;j<folder.childNodes.length;j++){
+      newdiv += generateBaseFolderDiv(folder.childNodes[j],depth+1);
+   }
+  }
+
+  newdiv += '</div>';
+
+  return newdiv;
+}
+
+function setSelectedPath(id, path){
+  this.selectedPath = path;
+
+  var dv = document.getElementById(id);
+  if(dv != undefined){
+    dv.className = "selectedPath";
+
+    if(this.selectedDiv != null){
+      this.selectedDiv.className = "";
+    }
+    this.selectedDiv = dv;
+  }
+}
+
+function selectFolder(){
+  document.getElementById('path').value = this.selectedPath.replace(/%5C/g,"\\" );
+  hidePopup('bgpopup');
+  hidePopup('folderChooser');
+}
+</script>
+<link rel="stylesheet" type="text/css" href="/pentaho/content/RFP/resources/css/rfp.css">
+</head>
+
+<body>
+<div class="bgpopup" id="bgpopup"></div>
+  <div id="loadingpopup" class="loadingpopup">
+    <div id="loadingpopupBody" class="">
+      <img src="/pentaho/content/RFP/resources/loading.gif" /><span>${form.label.loading}</span>
+    </div>
+  </div>
+
+  <div id="popup" class="popup">
+    <div id="popupHeader" class="boxHeader">
+      <span>${form.label.error}</span>
+    </div>
+    <div id="popupBody" class="dialogBody"></div>
+    <div id="popupFooter" class="popupFooter">
+      <button class="dialogButton" onClick="hidePopup('popup')">${form.label.close}</button>
+    </div>
+  </div>
+
+  <div id="folderChooser" class="popup">
+    <div id="folderChooserHeader" class="boxHeader">
+      <span>${form.label.folderSelect}</span>
+    </div>
+    <div id="folderChooserBody" class="dialogBody"></div>
+    <div id="folderChooserFooter" class="popupFooter">
+      <button class="dialogButton" onClick="selectFolder()">${form.label.choose}</button>
+      <button class="dialogButton" onClick="hidePopup('bgpopup');hidePopup('folderChooser');">${form.label.close}</button>
+    </div>
+  </div>
+
+  <form id="form-id" method="POST" action="/pentaho/content/rfp/index.html?mode=update" enctype="multipart/form-data">
+    <table>
+      <tr>
+        <td>${form.label.file} :</td>
+        <td><input type="file" id="uploadfile" name="uploadfile" /></td>
+      </tr>
+      <tr>
+        <td>${form.label.title} :</td>
+        <td><input type="text" id="titre" /></td>
+      </tr>
+      <tr>
+        <td>${form.label.description} :</td>
+        <!--<td><input type="text" id="desc" /></td>-->
+		<td><textarea id="desc" rows="5" cols="50"></textarea></td>
+
+
+
+      </tr>
+      <tr>
+        <td>${form.label.path} :</td>
+        <td><input type="text" id="path" />&nbsp;<button type="button" onClick="selectPath('folderChooser','folderChooserBody');"
+          class="dialogButton">${form.label.folderSelect}</button><input type="hidden" id="fileOnServer" /><input type="hidden"
+          id="fileName" /></td>
+      </tr>
+    </table>
+  </form>
+  <button class="dialogButton" onClick="submitFile()">${form.label.sendbutton}</button>
+  <div id="truc"></div>
+</body>
+
+</html>

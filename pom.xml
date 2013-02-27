@@ -1,0 +1,115 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>com.atolcd.rfp</groupId>
+  <artifactId>rfp</artifactId>
+  <version>1.0-SNAPSHOT</version>
+  <packaging>jar</packaging>
+
+  <name>Pentaho Repository File Publisher</name>
+
+<build>
+  <defaultGoal>install</defaultGoal>
+  <plugins>
+    <plugin>
+      <groupId>org.apache.maven.plugins</groupId>
+      <artifactId>maven-compiler-plugin</artifactId>
+      <configuration>
+        <source>1.6</source>
+        <target>1.6</target>
+      </configuration>
+    </plugin>
+    <plugin>
+      <artifactId>maven-antrun-plugin</artifactId>
+      <version>1.3</version>
+      <executions>
+        <execution>
+          <phase>package</phase>
+          <configuration>
+            <tasks>
+              <copy todir="target/resources" preservelastmodified="true">
+                <fileset dir="src/main/resources"/>
+              </copy>
+            </tasks>
+            <descriptors>
+              <descriptor>src/main/assembly/assembly.xml</descriptor>
+            </descriptors>
+          </configuration>
+          <goals>
+            <goal>run</goal>
+          </goals>
+        </execution>
+      </executions>
+    </plugin>
+    <plugin>
+      <artifactId>maven-assembly-plugin</artifactId>
+      <configuration>
+        <finalName>RFP</finalName>
+        <descriptors>
+          <descriptor>src/main/assembly/assembly.xml</descriptor>
+        </descriptors>
+      </configuration>
+      <executions>
+        <execution>
+          <id>make-assembly</id>
+          <phase>package</phase>
+          <goals>
+            <goal>single</goal>
+          </goals>
+        </execution>
+      </executions>
+    </plugin>
+  </plugins>
+</build>
+
+  <repositories>
+    <repository>
+      <id>repo.pentaho.org</id>
+      <name>repo.pentaho.org-releases</name>
+      <url>http://repository.pentaho.org/artifactory/repo</url>
+    </repository>
+  </repositories>
+
+  <properties>
+    <pentaho.version>4.5.0-stable</pentaho.version>
+  </properties>
+
+  <dependencies>
+    <dependency>
+      <groupId>commons-logging</groupId>
+      <artifactId>commons-logging</artifactId>
+      <version>1.1.1</version>
+    </dependency>
+    <dependency>
+      <groupId>javax.servlet</groupId>
+      <artifactId>servlet-api</artifactId>
+      <version>2.4</version>
+    </dependency>
+    <dependency>
+      <groupId>pentaho</groupId>
+      <artifactId>pentaho-bi-platform-api</artifactId>
+      <version>${pentaho.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>pentaho</groupId>
+      <artifactId>pentaho-bi-platform-engine-core</artifactId>
+      <version>${pentaho.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>pentaho</groupId>
+      <artifactId>pentaho-bi-platform-engine-services</artifactId>
+      <version>${pentaho.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>pentaho</groupId>
+      <artifactId>pentaho-bi-platform-repository</artifactId>
+      <version>${pentaho.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>pentaho</groupId>
+      <artifactId>pentaho-bi-platform-web-servlet</artifactId>
+      <version>${pentaho.version}</version>
+    </dependency>
+  </dependencies>
+</project>

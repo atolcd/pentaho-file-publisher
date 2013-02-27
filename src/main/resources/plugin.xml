@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<plugin title='Repository File Publisher Plugin'>
+
+<static-paths>
+     <static-path url="/RFP/resources" localFolder="resources"/>
+</static-paths> 
+
+<overlays>
+	<overlay id="startup.rfp" resourcebundle="../content/RFP/resources/menu.properties">
+		<overlay id="startup.rfp">
+			<toolbar id="mainToolbar">
+				<toolbarbutton id="openFileUpload" image="../content/RFP/resources/rfp.jpeg"
+					onclick="mainToolbarHandler.openUrl('RFP','RFP','content/rfp?mode=formulaire')"
+					tooltiptext="${rfp-plugin.label}" insertafter="newAnalysisButton" />
+			</toolbar>
+		</overlay>
+	</overlay>
+</overlays>
+
+<menu-items>
+        <menu-item id="publish-file" anchor="file-new-submenu" label="Envoyer un fichier" command="content/rfp?mode=formulaire" type="MENU_ITEM" how="LAST_CHILD"/>
+</menu-items>
+
+<webservice
+    id="filePublishService"
+    type="xml"
+    title="Repository File Publisher Service"
+    description="A webservice that publish files on pentaho solutions repository"
+    class="com.atolcd.rfp.RepositoryFilePublisher"/>
+
+	<content-type type="pdf" mime-type="application/pdf">
+		<title>Portable Document File</title>
+		<description>PDF definition file</description>
+		<meta-provider>com.atolcd.rfp.RFPContentTypeMetaProvider</meta-provider>
+		<icon-url>content/RFP/resources/pdf.png</icon-url>
+		<operations>
+			<operation>
+				<id>RUN</id>
+				<command>content/rfp/index.html?solution={solution}&amp;path={path}&amp;action={name}&amp;dimension_prefetch=false&amp;mode=view&amp;biplugin=true#query/open/{name}</command>
+			</operation>    		
+		</operations>
+	</content-type>
+	
+	<content-type type="odt" mime-type="application/vnd.oasis.opendocument.text">
+		<title>Open Document Text</title>
+		<description>ODT definition file</description>
+		<meta-provider>com.atolcd.rfp.RFPContentTypeMetaProvider</meta-provider>
+		<icon-url>content/RFP/resources/odt.png</icon-url>
+		<operations>
+			<operation>
+				<id>RUN</id>
+				<command>content/rfp/index.html?solution={solution}&amp;path={path}&amp;action={name}&amp;dimension_prefetch=false&amp;mode=view&amp;biplugin=true#query/open/{name}</command>
+			</operation>    		
+		</operations>
+	</content-type>
+	
+	<content-type type="ods" mime-type="application/vnd.oasis.opendocument.spreadsheet">
+		<title>Open Document Spreadsheet</title>
+		<description>ODS definition file</description>
+		<meta-provider>com.atolcd.rfp.RFPContentTypeMetaProvider</meta-provider>
+		<icon-url>content/RFP/resources/ods.png</icon-url>
+		<operations>
+			<operation>
+				<id>RUN</id>
+				<command>content/rfp/index.html?solution={solution}&amp;path={path}&amp;action={name}&amp;dimension_prefetch=false&amp;mode=view&amp;biplugin=true#query/open/{name}</command>
+			</operation>    		
+		</operations>
+	</content-type>
+	
+	<content-type type="zip" mime-type="application/zip">
+		<title>Archive File</title>
+		<description>ZIP definition file</description>
+		<meta-provider>com.atolcd.rfp.RFPContentTypeMetaProvider</meta-provider>
+		<icon-url>content/RFP/resources/zip.png</icon-url>
+		<operations>
+			<operation>
+				<id>RUN</id>
+				<command>content/rfp/index.html?solution={solution}&amp;path={path}&amp;action={name}&amp;dimension_prefetch=false&amp;mode=view&amp;biplugin=true#query/open/{name}</command>
+			</operation>    		
+		</operations>
+	</content-type>
+	
+	<bean id="myPluginUploader" class="com.atolcd.rfp.RFPUploader"/>
+	
+<content-generator 
+    id="rfp"
+    title="RFP Display Handler"
+    type="pdf"
+    class="com.atolcd.rfp.RFPContentGenerator"/>
+    
+</plugin>
